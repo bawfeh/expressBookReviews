@@ -27,8 +27,6 @@ public_users.post("/register", (req,res) => {
     // Return error if username or password is missing
     return res.status(404).json({message: "Unable to register user."});
 });
- // return res.status(300).json({message: "Yet to be implemented"});
-//});
 
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
@@ -41,9 +39,9 @@ public_users.get('/isbn/:isbn',function (req, res) {
   // Retrieve books's details for the requested the ISBN parameter
   const isbn = req.params.isbn;
   if (books[isbn]) {
-    res.send(beautify(books[isbn]));
+    return res.send(beautify(books[isbn]));
   } else {
-    res.send(`No book with ISBN ${isbn}!\n`);
+    return res.send(`No book with ISBN ${isbn}!\n`);
   }
  });
   
@@ -59,7 +57,7 @@ public_users.get('/author/:author',function (req, res) {
     }).forEach((key) => {
         booksAuthoredBy[key] = books[key];
     })
-    res.send(beautify(booksAuthoredBy))
+    return res.send(beautify(booksAuthoredBy))
 });
 
 // Get all books based on title
@@ -74,16 +72,16 @@ public_users.get('/title/:title',function (req, res) {
     }).forEach((key) => {
         booksWithTitle[key] = books[key];
     })
-    res.send(beautify(booksWithTitle))
+    return res.send(beautify(booksWithTitle))
 });
 
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
     const isbn = req.params.isbn;
     if (books[isbn]) {
-        res.send(beautify(books[isbn]["reviews"]));
+        return res.send(beautify(books[isbn]["reviews"]));
     } else {
-        res.send(`No book with ISBN ${isbn}!\n`);
+        return res.send(`No book with ISBN ${isbn}!\n`);
     }
 });
 
