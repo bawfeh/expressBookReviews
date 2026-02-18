@@ -34,8 +34,8 @@ const authenticatedUser = (username, password) => {
 
 //only registered users can login
 regd_users.post("/login", (req,res) => {
-    const username = req.body.username;
-    const password = req.body.password;
+    const username = req.query.username;
+    const password = req.query.password;
 
     // Check if username or password is missing
     if (!username || !password) {
@@ -47,13 +47,13 @@ regd_users.post("/login", (req,res) => {
         // Generate JWT access token
         let accessToken = jwt.sign({
             data: password
-        }, 'access', { expiresIn: 60 * 10 });
+        }, 'access', { expiresIn: 60 * 60 * 2 });
 
         // Store access token and username in session
         req.session.authorization = {
             accessToken, username
         }
-        return res.status(200).send("User successfully logged in");
+        return res.status(200).send(`User successfully logged in as ${req.session.authorization['username']}\n`);
     } else {
         return res.status(208).json({ message: "Invalid Login. Check username and password: " + "(" + username + ", " + password + ")" });
     }
@@ -62,12 +62,28 @@ regd_users.post("/login", (req,res) => {
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
     const isbn = req.params.isbn;
-    // const review = req.query;
+    const review = req.query.review;
+    const username = req.session.authorization["username"];
+    const keys = Object.keys(books);
+    if (keys.includes(isbn) & review) { // valid isbn and some review
+        books[isbn]["reviews"][username] = String(review);
+        return res.status(200).send(`Review for book ${isbn} successfully added/updated by ${username}!\n`);
+    } else {
+        return res.status(208).json({ message: `Book with ISBN ${isbn} does NOT exists!` });
+    }
+});
+
+// Delete a book review
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const isbn = req.params.isbn;
     const username = req.session.authorization["username"];
     const keys = Object.keys(books);
     if (keys.includes(isbn)) { // valid isbn
-        books[isbn]["reviews"][username] = req.query;
-    } 
+        delete books[isbn]["reviews"][username];
+        return res.status(200).send(`${username} successfully deleted their review for book ${isbn}!\n`);
+    } else {
+        return res.status(208).json({ message: `Book with ISBN ${isbn} does NOT exists!` });
+    }
 });
 
 module.exports.authenticated = regd_users;

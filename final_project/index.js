@@ -9,10 +9,17 @@ const app = express();
 
 app.use(express.json());
 
-app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
+// app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
+app.use(session({
+    secret: 'fingerprint_customer',
+    resave: true,              
+    saveUninitialized: true, 
+    cookie: { secure: false }   // true if using HTTPS
+  }));
 
 app.use("/customer/auth/*", function auth(req,res,next){
     // Check if user is logged in and has valid access token
+    // res.status(200).send(`Session authorization: ${req.session.authorization}\n`)
     if (req.session.authorization) {
         let token = req.session.authorization['accessToken'];
 
