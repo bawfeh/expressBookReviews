@@ -5,6 +5,11 @@ const regd_users = express.Router();
 
 let users = [];
 
+// Utility function for printing string formatted json outputs
+const beautify = (json_output) => {
+    return JSON.stringify(json_output, null, 4) + '\n';
+}
+
 const isValid = (username)=>{ //returns boolean
     // Filter the users array for any user with the same username
     let userswithsamename = users.filter((user) => {
@@ -53,21 +58,21 @@ regd_users.post("/login", (req,res) => {
         req.session.authorization = {
             accessToken, username
         }
-        return res.status(200).send(`User successfully logged in as ${req.session.authorization['username']}\n`);
+        return res.status(200).send(`User ${req.session.authorization['username']}, successfully logged in\n!`);
     } else {
-        return res.status(208).json({ message: "Invalid Login. Check username and password: " + "(" + username + ", " + password + ")" });
+        return res.status(208).json({ message: "Invalid Login. Check username and password! " });
     }
 });
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-    const isbn = req.params.isbn;
-    const review = req.query.review;
+    const isbn = String(req.params.isbn);
+    const review = String(req.query.review);
     const username = req.session.authorization["username"];
     const keys = Object.keys(books);
-    if (keys.includes(isbn) & review) { // valid isbn and some review
-        books[isbn]["reviews"][username] = String(review);
-        return res.status(200).send(`Review for book ${isbn} successfully added/updated by ${username}!\n`);
+    if (keys.includes(isbn) & review.length>0) { // valid isbn and some review
+        books[isbn]["reviews"][username] = review;
+        return res.status(200).send(`User ${username} successfully added/updated their review for book ${isbn}!\n`);
     } else {
         return res.status(208).json({ message: `Book with ISBN ${isbn} does NOT exists!` });
     }
@@ -75,7 +80,7 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
 
 // Delete a book review
 regd_users.delete("/auth/review/:isbn", (req, res) => {
-    const isbn = req.params.isbn;
+    const isbn = String(req.params.isbn);
     const username = req.session.authorization["username"];
     const keys = Object.keys(books);
     if (keys.includes(isbn)) { // valid isbn
@@ -86,7 +91,13 @@ regd_users.delete("/auth/review/:isbn", (req, res) => {
     }
 });
 
+regd_users.get('/protected', (req, res) => {
+    if (!req.session.authorization) {
+        return res.status(401).json({message: `User not logged in! Session ID: ${req.sessionID}`});
+    }
+    res.json({ currentUser: req.session.authorization['username'] });
+});
+
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
-// module.exports.authenticatedUser = authenticatedUser;
 module.exports.users = users;
