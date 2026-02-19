@@ -58,7 +58,7 @@ regd_users.post("/login", (req,res) => {
         req.session.authorization = {
             accessToken, username
         }
-        return res.status(200).send(`User ${req.session.authorization['username']}, successfully logged in\n!`);
+        return res.status(200).send(`User successfully logged in as ${req.session.authorization['username']}!\n!`);
     } else {
         return res.status(208).json({ message: "Invalid Login. Check username and password! " });
     }
@@ -91,11 +91,29 @@ regd_users.delete("/auth/review/:isbn", (req, res) => {
     }
 });
 
+// Test session authentication
 regd_users.get('/protected', (req, res) => {
     if (!req.session.authorization) {
         return res.status(401).json({message: `User not logged in! Session ID: ${req.sessionID}`});
     }
     res.json({ currentUser: req.session.authorization['username'] });
+});
+
+// Retrieve all users
+regd_users.get('/users', (req, res) => {
+    if (users.length>0) {
+        return res.send(JSON.stringify(users, null, 2));
+    } else {
+        return res.status(208).json({message: `Users list is EMPTY: ${users}!`});
+    }
+});
+
+// Reset users list
+regd_users.put('/clear', (req, res) => {
+    if (users.length>0) {
+        users.length = 0; 
+        return res.status(200).json({message: "Users list emptied!"});
+    }
 });
 
 module.exports.authenticated = regd_users;
