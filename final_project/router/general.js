@@ -39,8 +39,8 @@ public_users.get('/', function (req, res) {
         }
     });
     // Call promise
-    getAllBooks.then(allBooks => {
-        res.send(beautify(allBooks));
+    getAllBooks.then(resolved => {
+        res.send(beautify(resolved));
     }).catch(error => {
         res.send(error + "\n");
     });
@@ -50,18 +50,14 @@ public_users.get('/', function (req, res) {
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn', function (req, res) {
     const isbn = req.params.isbn;
-    const getBookByISBN = new Promise((resolve, reject) => {
-        if (books[isbn]) {
-            resolve(books[isbn]);
-        } else {
-            reject(`No book with ISBN ${isbn}!`);
+    Promise.resolve(books[isbn])
+    .then(book =>{
+        if (!book) {
+            throw `No book with ISBN ${isbn}!`;
         }
-    });
-  
-    getBookByISBN.then(book => {
         res.send(beautify(book));
     }).catch(error => {
-        res.send(error + "\n");
+        res.status(208).send(error + '\n');
     });
   
   });
