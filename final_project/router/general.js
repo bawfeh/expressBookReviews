@@ -117,6 +117,7 @@ public_users.get('/title/:title',function (req, res) {
     });
 });
 
+/*
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
     const isbn = req.params.isbn;
@@ -124,6 +125,24 @@ public_users.get('/review/:isbn',function (req, res) {
         return res.send(beautify(books[isbn]["reviews"]));
     } else {
         return res.send(`No book with ISBN ${isbn}!\n`);
+    }
+});
+*/
+// Get book review
+regd_users.put("/review/:isbn", (req, res) => {
+    const isbn = String(req.params.isbn);
+    const review = String(req.query.review);
+    const username = req.session.authorization["username"];
+
+    if (Object.keys(books).includes(isbn)) { // valid isbn
+
+        if (review.length>0) { // some review provided
+            books[isbn]["reviews"][username] = review;
+            return res.status(200).send(`User ${username} successfully added/updated their review for book ${isbn}!\n`);
+        }      
+        
+    } else {
+        return res.status(404).json({ message: `No book with ISBN ${isbn} in our collection!` });
     }
 });
 

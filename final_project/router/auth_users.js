@@ -69,12 +69,16 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     const isbn = String(req.params.isbn);
     const review = String(req.query.review);
     const username = req.session.authorization["username"];
-    const keys = Object.keys(books);
-    if (keys.includes(isbn) & review.length>0) { // valid isbn and some review
-        books[isbn]["reviews"][username] = review;
-        return res.status(200).send(`User ${username} successfully added/updated their review for book ${isbn}!\n`);
+
+    if (Object.keys(books).includes(isbn)) { // valid isbn
+
+        if (review.length>0) { // some review provided
+            books[isbn]["reviews"][username] = review;
+            return res.status(200).send(`User ${username} successfully added/updated their review for book ${isbn}!\n`);
+        }      
+        
     } else {
-        return res.status(208).json({ message: `Book with ISBN ${isbn} does NOT exists!` });
+        return res.status(404).json({ message: `No book with ISBN ${isbn} in our collection!` });
     }
 });
 
@@ -82,12 +86,14 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
 regd_users.delete("/auth/review/:isbn", (req, res) => {
     const isbn = String(req.params.isbn);
     const username = req.session.authorization["username"];
-    const keys = Object.keys(books);
-    if (keys.includes(isbn)) { // valid isbn
+
+    if (Object.keys(books).includes(isbn)) { // valid isbn
+
         delete books[isbn]["reviews"][username];
-        return res.status(200).send(`${username} successfully deleted their review for book ${isbn}!\n`);
+        return res.status(200).send(`User ${username} successfully deleted their review for book ${isbn}!\n`);
+
     } else {
-        return res.status(208).json({ message: `Book with ISBN ${isbn} does NOT exists!` });
+        return res.status(404).json({ message: `No book with ISBN ${isbn} in our collection!` });
     }
 });
 
