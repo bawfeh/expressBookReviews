@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios').default;
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
@@ -7,6 +8,34 @@ const public_users = express.Router();
 // Utility function for printing string formatted json outputs
 const beautify = (json_output) => {
     return JSON.stringify(json_output, null, 4) + '\n';
+}
+// Utility function for converting list to dictionary
+const toDict = (mylist) => {
+    return Object.fromEntries(mylist.map((item, index) => [index, item]))
+}
+
+// Using promise callbacks to retrieve data from a given route
+function getDataPromise(raw_data, res, errorMsg='') {
+    Promise.resolve(raw_data)
+    .then(resolved =>{
+        if (!resolved || resolved.length==0) {
+            throw errorMsg;
+        }
+        res.status(200).send(beautify(resolved));
+    })
+    .catch(error => {
+        res.status(404).send(error + '\n');
+    });
+}
+
+// Using axios to extract data from an external URL
+function getDataAxios(url) {
+    // generate a Promise and resolve it
+    axios.get(url).then(response => {
+        return response.data;
+    }).catch(error => {
+        return error.toString();
+    });
 }
 
 public_users.post("/register", (req,res) => {
@@ -28,42 +57,33 @@ public_users.post("/register", (req,res) => {
     return res.status(404).json({message: "Unable to register user."});
 });
 
-// Get the book list available in the shop [Asynchronous-Promise Callback]
+// Get the book list available in the shop
 public_users.get('/', function (req, res) {
-    // Define the promise
-    const getAllBooks = new Promise((resolve, reject) => {
-        if (books) {
-            resolve(books);
-        } else {
-            reject("No books available");
-        }
-    });
-    // Call promise
-    getAllBooks
-    .then(resolved => {
-        res.status(302).send(beautify(resolved));
-    })
-    .catch(error => {
-        res.status(404404).send(error + "\n");
-    });
+    // Asynchronous retrieval using promise callbacks
+    getDataPromise(books, res, `No books available!`)
 
+})
+
+/*
+public_users.get('/', async function (req, res) {
+    // Assynchronous retrieval using async-await with Axios
+    try {
+        // Simulate Axios get with await
+        const response = await getData('http://localhost:5000/');
+        return res.status(200).send(beautify(response));
+    } catch (error) {
+        return res.status(500).send("Error retrieving books\n"+error);
+    }
 });
+*/
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn', function (req, res) {
     const isbn = req.params.isbn;
-    Promise.resolve(books[isbn])
-    .then(book =>{
-        if (!book) {
-            throw `No book with ISBN ${isbn}!`;
-        }
-        res.status(302).send(beautify(book));
-    })
-    .catch(error => {
-        res.status(404).send(error + '\n');
-    });
-  
-  });
+    // Asynchronous retrieval using promise callbacks
+    getDataPromise(books[isbn], res, `No book with ISBN ${isbn}!`)
+    
+});
   
 // Get book details based on author
 public_users.get('/author/:author',function (req, res) {
@@ -79,16 +99,10 @@ public_users.get('/author/:author',function (req, res) {
     .forEach((isbn) => {
         booksAuthoredBy.push(books[isbn]);
     })
-    Promise.resolve(booksAuthoredBy)
-    .then( (authorsBooks) => {
-        if (authorsBooks.length==0) {
-            throw `No book authored by ${author} in stock!\n`;
-        }
-        res.status(302).send(beautify(authorsBooks));
-    })
-    .catch(error => {
-        res.status(404).send(error);
-    });
+booksAuthoredBybooksore()authtoDict    booksAuthoredBy = Object.fromEntries(booksAuthoredBy.map((item, index) => [index, item]));
+    // Asynchronous retrieval using promise callbacks
+    getDataPromise(booksAuthoredBy, res, `No book authored by ${author} in stock!`)
+    
 });
 
 // Get all books based on title
@@ -105,41 +119,23 @@ public_users.get('/title/:title',function (req, res) {
     .forEach((isbn) => {
         booksWithTitle.push(books[isbn]);
     })
-    Promise.resolve(booksWithTitle)
-    .then( (booksWTitle) => {
-        if (booksWTitle.length==0) {
-            throw `No books with title ${title} in stock!\n`;
-        }
-        res.status(302).send(beautify(booksWTitle));
-    })
-    .catch(error => {
-        res.status(404).send(error);
-    });
+
+    getDataPromise(booksWithTitle, res, `No books with title ${title} in stock!`)
+    
 });
 
-/*
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
     const isbn = req.params.isbn;
-    if (books[isbn]) {
-        return res.send(beautify(books[isbn]["reviews"]));
-    } else {
-        return res.send(`No book with ISBN ${isbn}!\n`);
-    }
-});
-*/
-// Get book review
-regd_users.put("/review/:isbn", (req, res) => {
-    const isbn = String(req.params.isbn);
-    const review = String(req.query.review);
-    const username = req.session.authorization["username"];
 
     if (Object.keys(books).includes(isbn)) { // valid isbn
 
-        if (review.length>0) { // some review provided
-            books[isbn]["reviews"][username] = review;
-            return res.status(200).send(`User ${username} successfully added/updated their review for book ${isbn}!\n`);
-        }      
+        const reviews = books[isbn]["reviews"];
+        if (Object.keys(reviews).length>0) { // some content available
+            return res.status(200).send(beautify(reviews));
+        } else {
+            return res.status(404).send(beautify({"message":"No reviews found for this book."}));
+        }
         
     } else {
         return res.status(404).json({ message: `No book with ISBN ${isbn} in our collection!` });
