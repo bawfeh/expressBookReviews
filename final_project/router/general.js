@@ -9,16 +9,29 @@ const public_users = express.Router();
 const beautify = (json_output) => {
     return JSON.stringify(json_output, null, 4) + '\n';
 }
-// Utility function for converting list to dictionary
-const toDict = (mylist) => {
-    return Object.fromEntries(mylist.map((item, index) => [index, item]))
+
+// Utility function for search books by a given key and parameter
+const bookSearch = (key, param) => {
+    let searchResult = []  // list of books matching parameter
+    // Extract all keys of the 'books' object
+    // Filter keys matching the requested parameter
+    // then iterate these keys to retrieve corresponding book details
+    Object.keys(books)
+    .filter((isbn) => {
+        return (books[isbn][key].trim().toLowerCase() === param);
+    })
+    .forEach((isbn) => {
+        searchResult.push(books[isbn]);
+    })
+    // return result as dictionary
+    return Object.fromEntries(searchResult.map((item, index) => [index, item]));
 }
 
 // Using promise callbacks to retrieve data from a given route
 function getDataPromise(raw_data, res, errorMsg='') {
     Promise.resolve(raw_data)
     .then(resolved =>{
-        if (!resolved || resolved.length==0) {
+        if (!resolved || Object.keys(resolved).length==0) {
             throw errorMsg;
         }
         res.status(200).send(beautify(resolved));
@@ -57,6 +70,8 @@ public_users.post("/register", (req,res) => {
     return res.status(404).json({message: "Unable to register user."});
 });
 
+/* ====== Endpoints using Express Router ======== */
+
 // Get the book list available in the shop
 public_users.get('/', function (req, res) {
     // Asynchronous retrieval using promise callbacks
@@ -69,7 +84,7 @@ public_users.get('/', async function (req, res) {
     // Assynchronous retrieval using async-await with Axios
     try {
         // Simulate Axios get with await
-        const response = await getData('http://localhost:5000/');
+        const response = await getDataAxios('http://localhost:5000/');
         return res.status(200).send(beautify(response));
     } catch (error) {
         return res.status(500).send("Error retrieving books\n"+error);
@@ -79,27 +94,21 @@ public_users.get('/', async function (req, res) {
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn', function (req, res) {
+
     const isbn = req.params.isbn;
+
     // Asynchronous retrieval using promise callbacks
     getDataPromise(books[isbn], res, `No book with ISBN ${isbn}!`)
-    
+
 });
   
 // Get book details based on author
 public_users.get('/author/:author',function (req, res) {
+
     const author = req.params.author.trim().toLowerCase();
-    let booksAuthoredBy = []  // list of books by this author
-    // Extract all keys of the 'books' object
-    // Filter keys matching the requested author
-    // then iterate these keys to retrieve corresponding book details
-    Object.keys(books)
-    .filter((isbn) => {
-        return (books[isbn]["author"].trim().toLowerCase() === author);
-    })
-    .forEach((isbn) => {
-        booksAuthoredBy.push(books[isbn]);
-    })
-booksAuthoredBybooksore()authtoDict    booksAuthoredBy = Object.fromEntries(booksAuthoredBy.map((item, index) => [index, item]));
+
+    booksAuthoredBy = bookSearch(key='author', param=author);
+
     // Asynchronous retrieval using promise callbacks
     getDataPromise(booksAuthoredBy, res, `No book authored by ${author} in stock!`)
     
@@ -107,19 +116,12 @@ booksAuthoredBybooksore()authtoDict    booksAuthoredBy = Object.fromEntries(book
 
 // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
-    const title = req.params.title.trim().toLowerCase();
-    let booksWithTitle = []  // list of books by this title
-    // Get all keys of the 'books' object
-    // Filter keys matching the requested title
-    // then iterate these keys to retrieve corresponding book details
-    Object.keys(books)
-    .filter((isbn) => {
-        return books[isbn]["title"].trim().toLowerCase() === title;
-    })
-    .forEach((isbn) => {
-        booksWithTitle.push(books[isbn]);
-    })
 
+    const title = req.params.title.trim().toLowerCase();
+
+    booksWithTitle = bookSearch(key='title', param=title);
+
+    // Asynchronous retrieval using promise callbacks
     getDataPromise(booksWithTitle, res, `No books with title ${title} in stock!`)
     
 });
