@@ -79,8 +79,7 @@ public_users.get('/', function (req, res) {
 
 })
 
-/*
-public_users.get('/', async function (req, res) {
+public_users.get('/axios/', async function (req, res) {
     // Assynchronous retrieval using async-await with Axios
     try {
         // Simulate Axios get with await
@@ -90,7 +89,6 @@ public_users.get('/', async function (req, res) {
         return res.status(500).send("Error retrieving books\n"+error);
     }
 });
-*/
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn', function (req, res) {
